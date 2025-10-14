@@ -14,7 +14,7 @@ def create_handler(usecase: UseCase) -> Blueprint:
 
     @bp.route("/api/news/search")
     def search():
-        """?q=keyword"""
+        """path params: q(query), page, size"""
         return search_context(usecase)
 
     return bp
@@ -42,8 +42,16 @@ def create_context(usecase: UseCase):
 
 def search_context(usecase: UseCase):
     q = request.args.get("q")
-    if not q:
-        return jsonify({"error": "Missing query param ?q="}), 400
+    page = int(request.args.get("page", 1))
+    size = int(request.args.get("size", 10))
 
-    news = usecase.search(q)
-    return jsonify(news), 200
+    if not q:
+        return jsonify({"error": "Missing query param 'q'"}), 400
+
+    result = usecase.search(q, page, size)
+    return jsonify({
+        "total": result["total"],
+        "page": page,
+        "size": size,
+        "news": result["news"]
+    }), 200

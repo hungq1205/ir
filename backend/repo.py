@@ -19,9 +19,13 @@ class Repo:
             return []
         conn = get_connection()
         c = conn.cursor()
-        placeholders = ",".join(["%s"] * len(ids))
-        query = f"SELECT id, title, content, label FROM news WHERE id IN ({placeholders})"
-        c.execute(query, ids)
+        query = """
+            SELECT id, title, content, label
+            FROM news
+            WHERE id = ANY(%s)
+            ORDER BY array_position(%s, id)
+        """
+        c.execute(query, (ids, ids))
         rows = c.fetchall()
         conn.close()
         return [
