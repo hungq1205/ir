@@ -13,6 +13,6 @@ class UseCase(ABC):
         pass
 
     @abstractmethod
-    def search(self, query: str, page: int = 1, size: int = 10) -> dict:
+    def search(self, should: list[str], must: list[str], must_not: list[str], category: str, page: int = 1, size: int = 10) -> dict:
         """Search news -> returns dict: { "total": n, "news": [...] }"""
         pass

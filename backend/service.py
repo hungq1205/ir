@@ -19,9 +19,8 @@ class Service(UseCase):
 
         return new_doc
 
-    def search(self, query: str, page: int = 1, size: int = 10) -> dict:
-        from_ = (page - 1) * size
-        hits, total = self.es.search(query, from_=from_, size=size)
+    def search(self, should: list[str], must: list[str], must_not: list[str], category: str, page: int = 1, size: int = 10) -> dict:
+        hits, total = self.es.search(should, must, must_not, category, page=page, size=size)
         ids = [int(h["_id"]) for h in hits]
         docs = self.repo.get_by_ids(ids)
 

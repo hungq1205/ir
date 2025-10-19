@@ -10,11 +10,12 @@ def create_handler(usecase: UseCase) -> Blueprint:
 
     @bp.route("/api/news", methods=["POST"])
     def create():
+        """body: title, content, label"""
         return create_context(usecase)
 
-    @bp.route("/api/news/search")
+    @bp.route("/api/news/search", methods=["POST"])
     def search():
-        """path params: q(query), page, size"""
+        """body: must, should, must_not, category, page, page_size"""
         return search_context(usecase)
 
     return bp
@@ -31,7 +32,7 @@ def create_context(usecase: UseCase):
     data = request.get_json()
     title = data.get("title")
     content = data.get("content")
-    label = data.get("label")
+    label = data.get("category")
 
     if not all([title, content, label]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -39,16 +40,21 @@ def create_context(usecase: UseCase):
     new = usecase.create(title, content, label)
     return jsonify(new), 201
 
-
 def search_context(usecase: UseCase):
-    q = request.args.get("q")
-    page = int(request.args.get("page", 1))
-    size = int(request.args.get("size", 10))
+    data = request.get_json(silent=True) or {}
 
-    if not q:
-        return jsonify({"error": "Missing query param 'q'"}), 400
+    must = data.get("must", [])
+    should = data.get("should", [])
+    must_not = data.get("must_not", [])
+    category = data.get("category", "")
+    page = int(data.get("page", 1))
+    size = int(data.get("page_size", 10))
 
-    result = usecase.search(q, page, size)
+    if not isinstance(must, list) or not isinstance(should, list) or not isinstance(must_not, list):
+        return jsonify({"error": "'must', 'should', and 'must_not' must be arrays"}), 400
+
+    result = usecase.search(should, must, must_not, category, page, size)
+
     return jsonify({
         "total": result["total"],
         "page": page,
