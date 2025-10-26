@@ -11,6 +11,7 @@ export interface NewsItem {
   label: string;
   date: string;
   content: string;
+  score?: number;
 }
 
 export interface SearchResponse {

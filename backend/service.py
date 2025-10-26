@@ -24,4 +24,7 @@ class Service(UseCase):
         ids = [int(h["_id"]) for h in hits]
         docs = self.repo.get_by_ids(ids)
 
+        for doc, hit in zip(docs, hits):
+            doc["score"] = hit["_score"]
+
         return { "total": total, "news": docs }

@@ -132,9 +132,14 @@ export const BrowsingPage = () => {
                   className="cursor-pointer"
                   onClick={() => navigate(`/news/${item.id}`)}
                 >
-                  <div className="mb-1">
+                  <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs text-gray-600 mr-2">{item.label}</span>
-                    <span className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</span>
+                    {/* <span className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</span> */}
+                    {item.score !== undefined && (
+                      <span className="text-xs text-gray-500 ml-auto">
+                        Score: <span className="font-medium text-gray-700">{item.score.toFixed(2)}</span>
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-xl text-blue-700 hover:underline mb-1">
                     {item.title}
