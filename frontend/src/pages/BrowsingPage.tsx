@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { searchNews, SearchResponse, NewsItem } from '../services/api';
+import { Search, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { searchNews, SearchResponse } from '../services/api';
 import { parseSearchQuery } from '../utils/searchParser';
 import { CATEGORIES } from '../utils/constants';
+
+function formatTimestamp(timestamp?: number): string {
+  if (!timestamp) return '';
+  const date = new Date(timestamp * 1000);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${hours}:${minutes} | ${month}/${day}/${year}`;
+}
 
 export const BrowsingPage = () => {
   const [searchParams] = useSearchParams();
@@ -83,7 +94,7 @@ export const BrowsingPage = () => {
           </div>
 
           <div className="mt-4 flex items-center gap-4">
-            <span className="text-sm text-gray-600">Chủ đề:</span>
+            <span className="text-sm text-gray-600">Thể loại:</span>
             <div className="flex gap-2 overflow-x-auto">
               {CATEGORIES.map((cat) => (
                 <button
@@ -106,10 +117,10 @@ export const BrowsingPage = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-3xl mx-auto px-6 py-8">
         {loading && (
           <div className="text-center py-12 text-gray-600">
-            Loading results...
+            Đang tìm tin tức...
           </div>
         )}
 
@@ -122,31 +133,49 @@ export const BrowsingPage = () => {
         {results && !loading && (
           <>
             <div className="mb-6 text-sm text-gray-600">
-              Tìm được {results.total} kết quả
+              About {results.total} results
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               {results.news.map((item) => (
                 <article
                   key={item.id}
-                  className="cursor-pointer"
+                  className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => navigate(`/news/${item.id}`)}
                 >
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs text-gray-600 mr-2">{item.label}</span>
-                    {/* <span className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</span> */}
-                    {item.score !== undefined && (
-                      <span className="text-xs text-gray-500 ml-auto">
-                        Score: <span className="font-medium text-gray-700">{item.score.toFixed(2)}</span>
+                  {item.thumbnail ? (
+                    <img
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-40 h-32 object-cover rounded-lg flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-40 h-32 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ImageIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="mb-2 flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                        {item.category}
                       </span>
-                    )}
+                      <span className="text-xs text-gray-500">
+                        {formatTimestamp(item.published_at) || 'Unknown date'}
+                      </span>
+                      {item.score !== undefined && (
+                        <span className="text-xs text-gray-500 ml-auto">
+                          Score: <span className="font-medium text-gray-700">{item.score.toFixed(2)}</span>
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-lg text-blue-700 hover:underline mb-2 font-semibold line-clamp-2">
+                      {item.title}
+                    </h2>
+                    <p className="text-sm text-gray-700 line-clamp-2">
+                      {item.content}
+                    </p>
                   </div>
-                  <h2 className="text-xl text-blue-700 hover:underline mb-1">
-                    {item.title}
-                  </h2>
-                  <p className="text-sm text-gray-700 line-clamp-2">
-                    {item.content}
-                  </p>
                 </article>
               ))}
             </div>

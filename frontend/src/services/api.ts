@@ -7,11 +7,12 @@ export interface SearchQuery {
 
 export interface NewsItem {
   id: string;
-  title: string;
-  label: string;
-  date: string;
+  title?: string;
+  category: string;
+  published_at?: number;
   content: string;
   score?: number;
+  thumbnail?: string;
 }
 
 export interface SearchResponse {
@@ -46,20 +47,44 @@ export const searchNews = async (
     }),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to search news');
-  }
-
+  if (!response.ok)
+    throw new Error('Failed to search news: ' + response.statusText);
   return response.json();
+};
+
+export const getRelevantNews = async (
+  currentId: number,
+  positiveIds: number[] = [],
+  negativeIds: number[] = [],
+  size: number = 5
+): Promise<NewsItem[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/news/relevant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        current_id: currentId,
+        positive_ids: positiveIds,
+        negative_ids: negativeIds,
+        size,
+      }),
+    });
+
+    if (!response.ok)
+      throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+    return await response.json();
+  } catch (error) {
+    throw new Error('Failed to get relvent news of ' + currentId + ': ' + (error instanceof Error ? error.message : String(error)));
+  }
 };
 
 export const getNewsById = async (newsId: string): Promise<NewsItem> => {
   const response = await fetch(`${API_BASE_URL}/news/${newsId}`);
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch news');
-  }
-
+  if (!response.ok)
+    throw new Error('Failed to fetch news: ' + response.statusText);
   return response.json();
 };
 
@@ -72,9 +97,7 @@ export const createNews = async (news: CreateNewsRequest): Promise<NewsItem> => 
     body: JSON.stringify(news),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to create news');
-  }
-
+  if (!response.ok)
+    throw new Error('Failed to create news: ' + response.statusText);
   return response.json();
 };

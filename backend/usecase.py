@@ -3,8 +3,13 @@ from abc import ABC, abstractmethod
 class UseCase(ABC):
 
     @abstractmethod
-    def get(self, new_id: int) -> dict | None:
+    def get(self, new_id: str) -> dict | None:
         """Get news by ID"""
+        pass
+
+    @abstractmethod
+    def get_relevant(self, current_id: str, positive_ids: list[str], negative_ids: list[str], size: int = 5) -> list[dict]:
+        """Get relevant news"""
         pass
 
     @abstractmethod

@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS news (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
+    thumbnail TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    label VARCHAR(63) NOT NULL
+    category VARCHAR(63) NOT NULL,
+    published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

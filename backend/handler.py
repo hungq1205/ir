@@ -7,6 +7,11 @@ def create_handler(usecase: UseCase) -> Blueprint:
     @bp.route("/api/news/<int:id>")
     def get(id):
         return get_context(usecase, id)
+    
+    @bp.route("/api/news/relevant", methods=["POST"])
+    def get_relevant():
+        """body: current_id, positive_ids, negative_ids"""
+        return get_relevant_context(usecase)
 
     @bp.route("/api/news", methods=["POST"])
     def create():
@@ -21,12 +26,22 @@ def create_handler(usecase: UseCase) -> Blueprint:
     return bp
 
 
-def get_context(usecase: UseCase, id: int):
+def get_context(usecase: UseCase, id: str):
     new = usecase.get(id)
     if not new:
         return jsonify({"error": "Not found"}), 404
     return jsonify(new), 200
 
+def get_relevant_context(usecase: UseCase):
+    data = request.get_json()
+    current_id = data.get("current_id")
+    positive_ids = data.get("positive_ids", [])
+    negative_ids = data.get("negative_ids", [])
+
+    if current_id is None:
+        return jsonify({"error": "Missing 'current_id' field"}), 400
+    relevant = usecase.get_relevant(current_id, positive_ids, negative_ids)
+    return jsonify(relevant), 200
 
 def create_context(usecase: UseCase):
     data = request.get_json()

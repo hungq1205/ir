@@ -2,12 +2,16 @@ import psycopg2
 import os
 
 class Repo:
-    def insert(self, title, content, label):
+    def insert(self, title, thumbnail, content, category):
         conn = get_connection()
         c = conn.cursor()
         c.execute(
-            "INSERT INTO news (title, content, label) VALUES (%s, %s, %s) RETURNING id;",
-            (title, content, label)
+            """
+            INSERT INTO news (title, thumbnail, content, category)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id;
+            """,
+            (title, thumbnail, content, category)
         )
         new_id = c.fetchone()[0]
         conn.commit()
@@ -20,16 +24,16 @@ class Repo:
         conn = get_connection()
         c = conn.cursor()
         query = """
-            SELECT id, title, content, label
+            SELECT id, title, thumbnail, content, category, published_at
             FROM news
             WHERE id = ANY(%s)
-            ORDER BY array_position(%s, id)
+            ORDER BY published_at DESC
         """
-        c.execute(query, (ids, ids))
+        c.execute(query, (ids,))
         rows = c.fetchall()
         conn.close()
         return [
-            {"id": r[0], "title": r[1], "content": r[2], "label": r[3]} for r in rows
+            {"id": r[0], "title": r[1], 'thumbnail': r[2], "content": r[3], "category": r[4], "published_at": r[5]} for r in rows
         ]
 
 def get_connection():
