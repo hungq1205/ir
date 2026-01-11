@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Tag, Image as ImageIcon } from 'lucide-react';
 import { getNewsById, getRelevantNews, NewsItem } from '../services/api';
+import { getClickFeedback } from '../utils/clickFeedback';
 
-function formatTimestamp(timestamp?: number): string {
+function formatTimestamp(timestamp?: string | number): string {
   if (!timestamp) return '';
-  const date = new Date(timestamp * 1000);
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  };
-  return date.toLocaleDateString('en-US', options);
+  const date = typeof timestamp === 'number' ? new Date(timestamp * 1000) : new Date(timestamp);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes} | ${day}/${month}/${year}`;
 }
 
 export const DetailsPage = () => {
@@ -35,13 +34,11 @@ export const DetailsPage = () => {
       try {
         const data = await getNewsById(newsId);
         setNews(data);
-
         setRelatedLoading(true);
-        const currentId = parseInt(newsId, 10);
-        if (!isNaN(currentId)) {
-          const related = await getRelevantNews(currentId, [], [], 5);
-          setRelatedNews(related);
-        }
+
+        const { positives, negatives } = getClickFeedback();
+        const related = await getRelevantNews(newsId, positives.filter(id => id !== newsId), negatives, 5);
+        setRelatedNews(related);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load news');
       } finally {

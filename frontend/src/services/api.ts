@@ -53,9 +53,9 @@ export const searchNews = async (
 };
 
 export const getRelevantNews = async (
-  currentId: number,
-  positiveIds: number[] = [],
-  negativeIds: number[] = [],
+  currentId: string,
+  positiveIds: string[] = [],
+  negativeIds: string[] = [],
   size: number = 5
 ): Promise<NewsItem[]> => {
   try {

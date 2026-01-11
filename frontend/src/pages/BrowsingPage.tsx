@@ -4,16 +4,17 @@ import { Search, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-re
 import { searchNews, SearchResponse } from '../services/api';
 import { parseSearchQuery } from '../utils/searchParser';
 import { CATEGORIES } from '../utils/constants';
+import { registerClickFeedback, clearClickFeedback } from '../utils/clickFeedback';
 
-function formatTimestamp(timestamp?: number): string {
+function formatTimestamp(timestamp?: string | number): string {
   if (!timestamp) return '';
-  const date = new Date(timestamp * 1000);
+  const date = typeof timestamp === 'number' ? new Date(timestamp * 1000) : new Date(timestamp);
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
-  return `${hours}:${minutes} | ${month}/${day}/${year}`;
+  return `${hours}:${minutes} | ${day}/${month}/${year}`;
 }
 
 export const BrowsingPage = () => {
@@ -60,6 +61,8 @@ export const BrowsingPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchText.trim()) {
+      if (searchText.trim() !== encodeURIComponent(searchText.trim()))
+        clearClickFeedback();
       setCurrentPage(1);
       navigate(`/search?q=${encodeURIComponent(searchText.trim())}`);
     }
@@ -100,6 +103,7 @@ export const BrowsingPage = () => {
                 <button
                   key={cat}
                   onClick={() => {
+                    clearClickFeedback();
                     setCategory(cat);
                     setCurrentPage(1);
                   }}
@@ -117,7 +121,7 @@ export const BrowsingPage = () => {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto py-8">
         {loading && (
           <div className="text-center py-12 text-gray-600">
             Đang tìm tin tức...
@@ -141,7 +145,17 @@ export const BrowsingPage = () => {
                 <article
                   key={item.id}
                   className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => navigate(`/news/${item.id}`)}
+                  onClick={() => {
+                    if (results?.news) {
+                      const currentIndex = results.news.findIndex(n => n.id === item.id);
+                      const negativeIds = results.news
+                        .slice(0, currentIndex)
+                        .map(n => n.id);
+
+                      registerClickFeedback(item.id, negativeIds);
+                    }
+                    navigate(`/news/${item.id}`);
+                  }}
                 >
                   {item.thumbnail ? (
                     <img
@@ -183,7 +197,12 @@ export const BrowsingPage = () => {
             {totalPages > 1 && (
               <div className="mt-12 flex items-center justify-center gap-2">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    if (results?.news) {
+                      registerClickFeedback(null, results.news.map((n) => n.id));
+                    }
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                  }}
                   disabled={currentPage === 1}
                   className="p-2 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
@@ -195,7 +214,13 @@ export const BrowsingPage = () => {
                   return (
                     <button
                       key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
+                      onClick={() => {
+                        if (pageNum !== currentPage) {
+                          if (results?.news)
+                            registerClickFeedback(null, results.news.map((n) => n.id));
+                          setCurrentPage(pageNum);
+                        }
+                      }}
                       className={`w-10 h-10 rounded transition-colors ${
                         currentPage === pageNum
                           ? 'bg-blue-600 text-white'
@@ -208,7 +233,12 @@ export const BrowsingPage = () => {
                 })}
 
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => {
+                    if (results?.news) {
+                      registerClickFeedback(null, results.news.map((n) => n.id));
+                    }
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  }}
                   disabled={currentPage === totalPages}
                   className="p-2 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >

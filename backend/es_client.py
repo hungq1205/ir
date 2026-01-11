@@ -78,28 +78,56 @@ class ESClient:
         must = must or []
         must_not = must_not or []
 
+        must_queries = [
+            {"multi_match": {"query": q, "fields": ["title.folded", "content.folded"], "operator": "and"}}
+            for q in must or []
+        ]
+
+        should_queries = [
+            {"multi_match": {"query": q, "fields": ["title.folded", "content.folded"], "operator": "or"}}
+            for q in should or []
+        ]
+
+        if not must_queries and not should_queries:
+            must_queries = [{"match_all": {}}]
+
+        must_not_queries = [
+            {"multi_match": {"query": q, "fields": ["title.folded", "content.folded"], "operator": "or"}}
+            for q in must_not or []
+        ]
+
         bool_query = {
             "bool": {
-                "must": [
-                    {"multi_match": {"query": q, "fields": ["title", "content"], "operator": "and"}}
-                    for q in must
-                ],
-                "should": [
-                    {"multi_match": {"query": q, "fields": ["title", "content"], "operator": "or"}}
-                    for q in should
-                ],
-                "must_not": [
-                    {"multi_match": {"query": q, "fields": ["title", "content"], "operator": "or"}}
-                    for q in must_not
-                ],
-                "filter": [{"term": {"label": category}}] if category else [],
+                "must": must_queries,
+                "should": should_queries,
+                "must_not": must_not_queries,
+                "filter": [{"term": {"category": category}}] if category else [],
+            }
+        }
+
+        query = {
+            "function_score": {
+                "query": bool_query,
+                "boost_mode": "sum",
+                "score_mode": "sum",
+                "functions": [
+                    {
+                        "gauss": {
+                            "published_at": {
+                                "origin": "now",
+                                "scale": "7d",
+                                "decay": 0.5
+                            }
+                        }
+                    }
+                ]
             }
         }
 
         body = {
             "from": (page - 1) * size,
             "size": size,
-            "query": bool_query
+            "query": query
         }
 
         url = f"{self.es_url}/{self.index_name}/_search"

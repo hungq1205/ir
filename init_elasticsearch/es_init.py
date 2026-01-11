@@ -27,14 +27,31 @@ mapping = {
                 }
             },
             "analyzer": {
+                "folded": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": [
+                        "lowercase",
+                        "asciifolding",
+                        "stop",
+                    ]
+                },
                 "unigram": {
-                    "type": "standard",
-                    "stopwords": "_english_"
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": [
+                        "lowercase",
+                        "stop",
+                    ]
                 },
                 "unigram_bigram": {
                     "type": "custom",
                     "tokenizer": "standard",
-                    "filter": ["lowercase", "stop", "bigram_shingle"]
+                    "filter": [
+                        "lowercase",
+                        "stop",
+                        "bigram_shingle"
+                    ]
                 }
             }
         }
@@ -45,6 +62,7 @@ mapping = {
             "title": {
                 "type": "text",
                 "fields": {
+                    "folded": {"type": "text", "analyzer": "folded"},
                     "uni": {"type": "text", "analyzer": "unigram"},
                     "bi":  {"type": "text", "analyzer": "unigram_bigram"}
                 }
@@ -52,6 +70,7 @@ mapping = {
             "content": {
                 "type": "text",
                 "fields": {
+                    "folded": {"type": "text", "analyzer": "folded"},
                     "uni": {"type": "text", "analyzer": "unigram"},
                     "bi":  {"type": "text", "analyzer": "unigram_bigram"}
                 }
